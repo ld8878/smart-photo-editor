@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>智能修图</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #007AFF;
+      --primary-hover: #0056CC;
+      --primary-light: rgba(0, 122, 255, 0.1);
+      --bg: #F2F2F7;
+      --card: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --success: #34C759;
+      --success-light: rgba(52, 199, 89, 0.08);
+      --error: #FF3B30;
+      --radius: 20px;
+      --radius-sm: 12px;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #F8F9FC 0%, #F2F2F7 100%);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFD 100%);
+      padding: 16px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border: none;
+      border-radius: 0 0 24px 24px;
+      margin: 0 0 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      background: linear-gradient(135deg, var(--text) 0%, #3A3A3C 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: linear-gradient(135deg, var(--success) 0%, #30D158 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.15), 0 0 0 8px rgba(52, 199, 89, 0.08);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.15), 0 0 0 8px rgba(52, 199, 89, 0.08); }
+      50% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0.2), 0 0 0 12px rgba(52, 199, 89, 0.1); }
+    }
+
+    /* Steps Indicator */
+    .steps-indicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: var(--card);
+      border: none;
+      border-radius: 999px;
+      width: fit-content;
+      margin: 16px auto 0;
+      box-shadow: var(--shadow);
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #E5E5EA;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step-dot.active {
+      background: linear-gradient(135deg, var(--primary) 0%, #4DA3FF 100%);
+      transform: scale(1.4);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+    }
+
+    .step-dot.completed {
+      background: linear-gradient(135deg, var(--success) 0%, #30D158 100%);
+      box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.2);
+    }
+
+    /* Section */
+    .section {
+      background: var(--card);
+      margin: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      opacity: 1;
+      transform: translateX(0);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .section.hidden {
+      display: none;
+    }
+
+    .section.slide-in {
+      animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .section.slide-out {
+      animation: slideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(80px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(-80px);
+      }
+    }
+
+    .section-header {
+      padding: 18px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, #FAFBFD 0%, #FFFFFF 100%);
+    }
+
+    .section-header .step-badge {
+      background: linear-gradient(135deg, var(--primary) 0%, #4DA3FF 100%);
+      color: white;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 12px;
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+    }
+
+    .section-header .header-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .section-header .toggle-btn {
+      font-size: 14px;
+      color: var(--primary);
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .section-header .toggle-btn:active {
+      background: var(--primary-light);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-body {
+      padding: 20px;
+    }
+
+    .intro-tip {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, #F8F9FC 0%, #F2F2F7 100%);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--primary);
+    }
+
+    /* Upload Grid */
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .upload-box {
+      aspect-ratio: 1;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, #FAFBFD 0%, #F2F2F7 100%);
+      overflow: hidden;
+    }
+
+    .upload-box:active {
+      transform: scale(0.97);
+    }
+
+    .upload-box.has-file {
+      border-style: solid;
+      border-color: var(--success);
+      background: var(--success-light);
+      box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1);
+    }
+
+    .upload-box input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-box .icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+    }
+
+    .upload-box .thumb {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .upload-box .label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .upload-box .filename {
+      font-size: 11px;
+      color: #fff;
+      margin-top: 0;
+      padding: 6px 10px;
+      text-align: center;
+      word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      z-index: 2;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Step 1: only show thumbnail, hide file name text */
+    .upload-grid .upload-box .filename {
+      display: none;
+    }
+
+    .upload-box.has-file .icon {
+      color: var(--success);
+    }
+
+    .upload-box.has-file .thumb {
+      display: block;
+    }
+
+    .upload-box.has-file .icon,
+    .upload-box.has-file .label {
+      display: none;
+    }
+
+    /* Single Upload */
+    .upload-single {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      position: relative;
+      background: linear-gradient(135deg, #FAFBFD 0%, #F2F2F7 100%);
+      margin-bottom: 20px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .upload-single:active {
+      transform: scale(0.99);
+    }
+
+    .upload-single.has-file {
+      border-style: solid;
+      border-color: var(--success);
+      background: var(--success-light);
+      box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1);
+    }
+
+    .upload-single.prominent {
+      border-width: 2px;
+      background: linear-gradient(135deg, #F8FAFF 0%, #F5F8FF 100%);
+      min-height: 96px;
+    }
+
+    .upload-single input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-single .icon {
+      font-size: 36px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+    }
+
+    .upload-single .thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      object-fit: cover;
+      display: none;
+      flex-shrink: 0;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .upload-single.has-file .thumb {
+      display: block;
+    }
+
+    .upload-single.has-file .icon {
+      display: none;
+    }
+
+    .upload-single .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upload-single .title {
+      font-size: 15px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .upload-single .hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Options */
+    .options {
+      display: none;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .option input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+    }
+
+    /* Buttons */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #4DA3FF 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(0, 122, 255, 0.25);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #F8F9FC 0%, #F2F2F7 100%);
+      color: var(--text);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.97);
+      background: var(--border);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn-row.step2-actions {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .btn-row.step2-actions .btn {
+      min-height: 52px;
+    }
+
+    .btn-row.step2-actions .btn-secondary {
+      background: linear-gradient(135deg, #F8F9FC 0%, #F2F2F7 100%);
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn.loading {
+      pointer-events: none;
+      color: transparent;
+    }
+
+    .btn.loading::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border: 2.5px solid transparent;
+      border-top-color: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    .btn-secondary.loading::after {
+      border-top-color: var(--primary);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Recipe Panel */
+    .recipe-panel {
+      display: none;
+      background: linear-gradient(135deg, #F8F9FC 0%, #F2F2F7 100%);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-top: 16px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 140px;
+      overflow-y: auto;
+      color: var(--text-secondary);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .recipe-panel.show {
+      display: block;
+    }
+
+    /* Result */
+    .result-section {
+      background: var(--card);
+      margin: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: none;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .result-section.show {
+      display: block;
+      animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .result-section .section-header {
+      background: linear-gradient(135deg, var(--success) 0%, #30D158 100%);
+      color: white;
+      border-bottom: none;
+    }
+
+    .result-section .section-header .step-badge {
+      background: white;
+      color: var(--success);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .compare-container {
+      position: relative;
+      background: #000;
+      border-radius: 0;
+      overflow: hidden;
+      margin: -20px -20px 16px -20px;
+    }
+
+    .compare-img {
+      width: 100%;
+      display: block;
+    }
+
+    .compare-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .compare-overlay .compare-img {
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .compare-overlay.hidden {
+      visibility: hidden;
+    }
+
+    .compare-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(0, 0, 0, 0.65);
+      color: white;
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+    }
+
+    .result-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Error */
+    .error-msg {
+      display: none;
+      background: linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 59, 48, 0.12) 100%);
+      color: var(--error);
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 16px;
+      border-left: 3px solid var(--error);
+    }
+
+    .error-msg.show {
+      display: block;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(28, 28, 30, 0.95);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Spacer for section body elements */
+    .section-body > *:not(:last-child) {
+      margin-bottom: 16px;
+    }
+
+    /* Ensure upload areas and action buttons breathe on all steps */
+    .upload-grid,
+    .upload-single,
+    .btn-row,
+    .result-actions {
+      margin-top: 4px;
+    }
+
+    .section-body.step2-layout {
+      padding-top: 20px;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">智能修图</div>
+      <div class="status-dot"></div>
+    </div>
+  </header>
+
+  <div class="steps-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+
+  <!-- Step 1: Analyze -->
+  <div class="section" id="section1">
+    <div class="section-header">
+      <div class="header-left">
+        <div class="step-badge">1</div>
+        <span>选择原图和修后图</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <p class="intro-tip">上传原图和修后图，系统会自动提取可复用的修图风格。</p>
+      <div class="upload-grid">
+        <div class="upload-box" id="origBox">
+          <input type="file" id="orig" accept="image/*" />
+          <img class="thumb" id="origThumb" alt="原图预览" />
+          <div class="icon">📷</div>
+          <div class="label">原图</div>
+          <div class="filename" id="origName"></div>
+        </div>
+        <div class="upload-box" id="editBox">
+          <input type="file" id="edit" accept="image/*" />
+          <img class="thumb" id="editThumb" alt="修后图预览" />
+          <div class="icon">🎨</div>
+          <div class="label">修后图</div>
+          <div class="filename" id="editName"></div>
+        </div>
+      </div>
+
+      <div class="options">
+        <label class="option">
+          <input type="checkbox" id="useVlm" />
+          <span>AI 分析</span>
+        </label>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="btnAnalyze">开始分析</button>
+
+      <div class="error-msg" id="analyzeErr"></div>
+
+      <div class="recipe-panel" id="recipePanel"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: Apply -->
+  <div class="section" id="section2" style="display: none;">
+    <div class="section-header">
+      <div class="header-left">
+        <div class="step-badge">2</div>
+        <span>应用到新图</span>
+      </div>
+      <div class="header-actions">
+        <span class="toggle-btn" id="backToStep1">返回</span>
+        <span class="toggle-btn" id="toggleRecipe" style="display:none;">配方</span>
+      </div>
+    </div>
+    <div class="section-body step2-layout">
+      <div class="upload-single prominent" id="newImgBox">
+        <input type="file" id="newImg" accept="image/*" />
+        <img class="thumb" id="newImgThumb" alt="新图预览" />
+        <div class="icon">🖼️</div>
+        <div class="info">
+          <div class="title" id="newImgTitle">上传需要套用风格的新图</div>
+          <div class="hint" id="newImgHint">点击选择图片</div>
+        </div>
+      </div>
+
+      <div class="options">
+        <label class="option">
+          <input type="checkbox" id="useRef" />
+          <span>颜色迁移</span>
+        </label>
+      </div>
+
+      <div class="btn-row step2-actions">
+        <button class="btn btn-primary" id="btnApply">应用配方</button>
+        <button class="btn btn-secondary" id="btnGen">AI 增强</button>
+      </div>
+
+      <div class="error-msg" id="applyErr"></div>
+    </div>
+  </div>
+
+  <!-- Step 3: Result -->
+  <div class="result-section" id="section3">
+    <div class="section-header">
+      <div class="header-left">
+        <div class="step-badge">✓</div>
+        <span>处理结果</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="compare-container">
+        <img class="compare-img" id="afterImg" alt="处理后" />
+        <div class="compare-overlay hidden" id="beforeOverlay">
+          <img class="compare-img" id="beforeImg" alt="原图" />
+        </div>
+        <div class="compare-badge" id="compareBadge">处理后</div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-secondary" id="btnToggle">查看原图</button>
+        <button class="btn btn-primary" id="btnDownload">下载结果</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let lastRecipe = null;
+    let beforeUrl = null;
+    let afterUrl = null;
+    let showingBefore = false;
+    let currentStep = 1;
+
+    // Toast
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // Update step indicator
+    function updateStepIndicator(step) {
+      for (let i = 1; i <= 3; i++) {
+        const dot = document.getElementById('dot' + i);
+        dot.classList.remove('active', 'completed');
+        if (i < step) {
+          dot.classList.add('completed');
+        } else if (i === step) {
+          dot.classList.add('active');
+        }
+      }
+    }
+
+    // Slide to section
+    function slideToSection(targetStep) {
+      const currentSection = document.getElementById('section' + currentStep);
+      const targetSection = document.getElementById('section' + targetStep);
+      syncUploadUI();
+
+      if (currentSection) {
+        currentSection.style.display = 'none';
+      }
+
+      if (targetSection) {
+        targetSection.style.display = 'block';
+        targetSection.classList.remove('slide-in');
+        void targetSection.offsetWidth; // Force reflow
+        targetSection.classList.add('slide-in');
+      }
+
+      currentStep = targetStep;
+      updateStepIndicator(targetStep);
+
+      // Smooth scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setThumbPreview(thumbEl, file) {
+      if (!thumbEl) return;
+      const oldUrl = thumbEl.dataset.url;
+      if (oldUrl) {
+        URL.revokeObjectURL(oldUrl);
+        delete thumbEl.dataset.url;
+      }
+      if (!file) {
+        thumbEl.removeAttribute('src');
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      thumbEl.src = url;
+      thumbEl.dataset.url = url;
+    }
+
+    function syncUploadUI() {
+      const pairs = [
+        { input: 'orig', box: 'origBox', name: 'origName', thumb: 'origThumb' },
+        { input: 'edit', box: 'editBox', name: 'editName', thumb: 'editThumb' }
+      ];
+      pairs.forEach(({ input, box, name, thumb }) => {
+        const inputEl = document.getElementById(input);
+        const boxEl = document.getElementById(box);
+        const nameEl = document.getElementById(name);
+        const thumbEl = document.getElementById(thumb);
+        if (!inputEl || !boxEl) return;
+        const file = inputEl.files && inputEl.files[0];
+        if (file) {
+          boxEl.classList.add('has-file');
+          if (nameEl) nameEl.textContent = file.name;
+        } else {
+          boxEl.classList.remove('has-file');
+          if (nameEl) nameEl.textContent = '';
+        }
+        setThumbPreview(thumbEl, file || null);
+      });
+
+      const newInput = document.getElementById('newImg');
+      const newBox = document.getElementById('newImgBox');
+      const newTitle = document.getElementById('newImgTitle');
+      const newHint = document.getElementById('newImgHint');
+      const newThumb = document.getElementById('newImgThumb');
+      if (newInput && newBox && newTitle && newHint) {
+        const file = newInput.files && newInput.files[0];
+        if (file) {
+          newBox.classList.add('has-file');
+          newTitle.textContent = file.name;
+          newHint.textContent = '点击更换';
+        } else {
+          newBox.classList.remove('has-file');
+          newTitle.textContent = '上传需要套用风格的新图';
+          newHint.textContent = '点击选择图片';
+        }
+        setThumbPreview(newThumb, file || null);
+      }
+    }
+
+    function canSwipeToStep(targetStep) {
+      if (targetStep < 1 || targetStep > 3) return false;
+      // 进入第二步前至少需要有分析配方
+      if (targetStep === 2 && !lastRecipe) return false;
+      // 进入第三步前至少需要有处理结果
+      if (targetStep === 3 && !afterUrl) return false;
+      return true;
+    }
+
+    // Swipe navigation: left next / right previous
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    const SWIPE_MIN_DISTANCE = 60;
+    const SWIPE_MAX_DURATION = 500;
+
+    document.addEventListener('touchstart', (e) => {
+      if (!e.touches || e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (!e.changedTouches || e.changedTouches.length !== 1) return;
+
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const dx = endX - touchStartX;
+      const dy = endY - touchStartY;
+      const duration = Date.now() - touchStartTime;
+
+      if (duration > SWIPE_MAX_DURATION) return;
+      if (Math.abs(dx) < SWIPE_MIN_DISTANCE) return;
+      // 水平手势要明显大于垂直位移，避免和页面滚动冲突
+      if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
+
+      const targetStep = dx < 0 ? currentStep + 1 : currentStep - 1;
+      if (canSwipeToStep(targetStep)) {
+        slideToSection(targetStep);
+      }
+    }, { passive: true });
+
+    // Upload UI
+    function setupUpload(inputId, boxId, nameId) {
+      const input = document.getElementById(inputId);
+      input.addEventListener('change', () => {
+        syncUploadUI();
+      });
+    }
+
+    setupUpload('orig', 'origBox', 'origName');
+    setupUpload('edit', 'editBox', 'editName');
+    syncUploadUI();
+
+    document.getElementById('newImg').addEventListener('change', function() {
+      syncUploadUI();
+    });
+
+    // Analyze
+    document.getElementById('btnAnalyze').onclick = async () => {
+      const o = document.getElementById('orig').files[0];
+      const e = document.getElementById('edit').files[0];
+      const err = document.getElementById('analyzeErr');
+      const btn = document.getElementById('btnAnalyze');
+
+      err.classList.remove('show');
+      if (!o || !e) {
+        err.textContent = '请选择原图和修后图';
+        err.classList.add('show');
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      const fd = new FormData();
+      fd.append('original', o);
+      fd.append('edited', e);
+      fd.append('use_vlm', document.getElementById('useVlm').checked ? 'true' : 'false');
+
+      try {
+        const res = await fetch('/api/analyze', { method: 'POST', body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || res.statusText);
+
+        lastRecipe = data.recipe;
+        document.getElementById('recipePanel').textContent = JSON.stringify(data.recipe, null, 2);
+        document.getElementById('toggleRecipe').style.display = 'block';
+        showToast('分析完成');
+
+        // Slide to step 2
+        setTimeout(() => slideToSection(2), 300);
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.add('show');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    };
+
+    // Toggle recipe
+    document.getElementById('toggleRecipe').onclick = () => {
+      document.getElementById('recipePanel').classList.toggle('show');
+    };
+
+    // Back to step 1
+    document.getElementById('backToStep1').onclick = () => {
+      slideToSection(1);
+    };
+
+    // Apply
+    document.getElementById('btnApply').onclick = async () => {
+      const n = document.getElementById('newImg').files[0];
+      const err = document.getElementById('applyErr');
+      const btn = document.getElementById('btnApply');
+
+      err.classList.remove('show');
+
+      if (!lastRecipe) {
+        err.textContent = '请先完成分析';
+        err.classList.add('show');
+        return;
+      }
+      if (!n) {
+        err.textContent = '请选择要处理的图片';
+        err.classList.add('show');
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      const fd = new FormData();
+      fd.append('new_image', n);
+      fd.append('recipe_json', JSON.stringify(lastRecipe));
+
+      if (document.getElementById('useRef').checked) {
+        const o = document.getElementById('orig').files[0];
+        const e = document.getElementById('edit').files[0];
+        if (o && e) {
+          fd.append('ref_original', o);
+          fd.append('ref_edited', e);
+        }
+      }
+
+      try {
+        const res = await fetch('/api/apply', { method: 'POST', body: fd });
+        if (!res.ok) {
+          const t = await res.json().catch(() => ({}));
+          throw new Error(t.detail || res.statusText);
+        }
+        const blob = await res.blob();
+        const resultUrl = URL.createObjectURL(blob);
+        const originalUrl = URL.createObjectURL(n);
+
+        setCompareImages(originalUrl, resultUrl);
+        showToast('处理完成');
+
+        // Slide to step 3
+        setTimeout(() => slideToSection(3), 300);
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.add('show');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    };
+
+    // Generative
+    document.getElementById('btnGen').onclick = async () => {
+      const n = document.getElementById('newImg').files[0];
+      const err = document.getElementById('applyErr');
+      const btn = document.getElementById('btnGen');
+
+      err.classList.remove('show');
+
+      if (!lastRecipe) {
+        err.textContent = '请先完成分析';
+        err.classList.add('show');
+        return;
+      }
+      if (!n) {
+        err.textContent = '请选择要处理的图片';
+        err.classList.add('show');
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      const fd = new FormData();
+      fd.append('new_image', n);
+      fd.append('recipe_json', JSON.stringify(lastRecipe));
+      fd.append('description', document.getElementById('recipePanel').textContent.slice(0, 4000));
+
+      try {
+        const res = await fetch('/api/apply-generative', { method: 'POST', body: fd });
+        if (!res.ok) {
+          const t = await res.json().catch(() => ({}));
+          throw new Error(t.detail || res.statusText);
+        }
+        const blob = await res.blob();
+        const resultUrl = URL.createObjectURL(blob);
+        const originalUrl = URL.createObjectURL(n);
+
+        setCompareImages(originalUrl, resultUrl);
+        showToast('AI 增强完成');
+
+        // Slide to step 3
+        setTimeout(() => slideToSection(3), 300);
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.add('show');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    };
+
+    // Compare toggle
+    function setCompareImages(bUrl, aUrl) {
+      beforeUrl = bUrl;
+      afterUrl = aUrl;
+      showingBefore = false;
+
+      document.getElementById('beforeImg').src = bUrl;
+      document.getElementById('afterImg').src = aUrl;
+      document.getElementById('beforeOverlay').classList.add('hidden');
+      document.getElementById('compareBadge').textContent = '处理后';
+      document.getElementById('btnToggle').textContent = '查看原图';
+    }
+
+    document.getElementById('btnToggle').onclick = () => {
+      if (!beforeUrl || !afterUrl) return;
+
+      const overlay = document.getElementById('beforeOverlay');
+      const badge = document.getElementById('compareBadge');
+      const btn = document.getElementById('btnToggle');
+
+      showingBefore = !showingBefore;
+
+      if (showingBefore) {
+        overlay.classList.remove('hidden');
+        badge.textContent = '原图';
+        btn.textContent = '查看结果';
+      } else {
+        overlay.classList.add('hidden');
+        badge.textContent = '处理后';
+        btn.textContent = '查看原图';
+      }
+    };
+
+    // Download
+    document.getElementById('btnDownload').onclick = () => {
+      if (!afterUrl) return;
+      const a = document.createElement('a');
+      a.href = afterUrl;
+      a.download = 'edited_image.png';
+      a.click();
+      showToast('已开始下载');
+    };
+  </script>
+</body>
+</html>
